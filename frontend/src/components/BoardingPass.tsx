@@ -4,11 +4,14 @@ import { Flight } from "@/types/FlightType";
 type ExtendedFlight = Flight & {
   index?: number;
   canBeRemoved?: boolean;
+  setLoadingMessage: (msg: string) => void;
+  setSuccessMessage: (msg: string) => void;
+  setErrorMessage: (msg: string) => void;
   removeTicket?: (index: number) => void;
   addFlight: () => void;
 };
 
-export function BoardingPass({
+export default function BoardingPass({
   airline,
   flightNumber,
   departureAirport,
@@ -20,6 +23,9 @@ export function BoardingPass({
   canBeRemoved,
   addFlight,
   removeTicket,
+  setLoadingMessage,
+  setSuccessMessage,
+  setErrorMessage,
 }: ExtendedFlight) {
   const toLocalInput = (d: Date) =>
     new Date(d.getTime() - d.getTimezoneOffset() * 60000)
@@ -29,8 +35,28 @@ export function BoardingPass({
   const fetchTicket = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      const supportedTypes = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "application/pdf",
+      ];
+
+      if (!supportedTypes.includes(file.type)) {
+        setErrorMessage(
+          "Unsupported file type. Please upload PDF, PNG, JPG, or JPEG files."
+        );
+        return;
+      }
+
       const formData = new FormData();
-      formData.append("file", file);
+      const lowercaseFileName = file.name.toLowerCase();
+      const processedFile = new File([file], lowercaseFileName, {
+        type: file.type,
+      });
+
+      formData.append("file", processedFile);
+      setLoadingMessage("Uploading and processing ticket...");
       fetch("http://localhost:8000/api/flights/upload", {
         method: "POST",
         body: formData,
@@ -39,7 +65,10 @@ export function BoardingPass({
         .then((data) => {
           console.log("Success:", data);
           if (!data.relevant) {
-            console.log("No relevant flight information found in the ticket.");
+            setLoadingMessage("");
+            setErrorMessage("No relevant flight information found.");
+            setTimeout(() => setErrorMessage(""), 3000);
+            return;
           }
           edit?.airline(data.segments[0].airline_iata || "");
           edit?.arrivalAirport(data.segments[0].arrival_airport || "");
@@ -51,6 +80,9 @@ export function BoardingPass({
             new Date(data.segments[0].arrival_datetime_local) || new Date()
           );
           edit?.flightNumber(data.segments[0].flight_number || "");
+          setLoadingMessage("");
+          setSuccessMessage("Ticket processed successfully!");
+          setTimeout(() => setSuccessMessage(""), 3000);
         })
         .catch((error) => {
           console.error("Error:", error);

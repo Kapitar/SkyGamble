@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { BoardingPass } from "@/components/BoardingPass";
+import BoardingPass from "@/components/BoardingPass";
+import Notification from "@/components/Notification";
 import { Flight } from "@/types/FlightType";
 
 export default function Page() {
@@ -15,6 +16,9 @@ export default function Page() {
       arrivalDateTime: new Date(),
     },
   ]);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [loadingMessage, setLoadingMessage] = useState("");
 
   const addTicket = () => {
     setFlights([
@@ -34,10 +38,13 @@ export default function Page() {
     const newFlights = [...flights];
     newFlights.splice(index, 1);
     setFlights(newFlights);
-  }
+  };
 
   return (
     <div className="container mx-auto px-4 mt-10">
+      {!!errorMessage && <Notification type="error">{errorMessage}</Notification>}
+      {!!loadingMessage && <Notification type="loading">{loadingMessage}</Notification>}
+      {!!successMessage && <Notification type="success">{successMessage}</Notification>}
       <div className="flex justify-center text-center mb-10">
         <div className="w-196">
           <h1 className="text-6xl font-bold">
@@ -57,6 +64,9 @@ export default function Page() {
           key={index}
           index={index}
           removeTicket={removeTicket}
+          setLoadingMessage={setLoadingMessage}
+          setSuccessMessage={setSuccessMessage}
+          setErrorMessage={setErrorMessage}
           canBeRemoved={flights.length > 1 && index !== flights.length - 1}
           airline={flight.airline || ""}
           flightNumber={flight.flightNumber || ""}
