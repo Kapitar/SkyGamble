@@ -1,103 +1,120 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState } from "react";
+import BoardingPass from "@/components/BoardingPass";
+import Notification from "@/components/Notification";
+import { Flight } from "@/types/FlightType";
+
+export default function Page() {
+  const [flights, setFlights] = useState<Flight[]>([
+    {
+      airline: "",
+      flightNumber: "",
+      departureAirport: "",
+      arrivalAirport: "",
+      departureDateTime: new Date(),
+      arrivalDateTime: new Date(),
+    },
+  ]);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [loadingMessage, setLoadingMessage] = useState("");
+
+  const addTicket = () => {
+    setFlights([
+      ...flights,
+      {
+        airline: "",
+        flightNumber: "",
+        departureAirport: "",
+        arrivalAirport: "",
+        departureDateTime: new Date(),
+        arrivalDateTime: new Date(),
+      },
+    ]);
+  };
+
+  const removeTicket = (index: number) => {
+    const newFlights = [...flights];
+    newFlights.splice(index, 1);
+    setFlights(newFlights);
+  };
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="container mx-auto px-4 mt-10">
+      {!!errorMessage && <Notification type="error">{errorMessage}</Notification>}
+      {!!loadingMessage && <Notification type="loading">{loadingMessage}</Notification>}
+      {!!successMessage && <Notification type="success">{successMessage}</Notification>}
+      <div className="flex justify-center text-center mb-10">
+        <div className="w-196">
+          <h1 className="text-6xl font-bold">
+            Never miss your flight with{" "}
+            <span className="text-indigo-600">Sky Gamble</span>
+          </h1>
+          <p className="text-lg mt-4">
+            Plug in your flight, and we’ll predict your risk of arriving late at
+            the gate—using live delays, security wait times, airport layout, and
+            historic data. Simple. Private. Fast.
+          </p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        {/* <Image src="/image.jpg" alt="missing-plane" width={500} height={100} /> */}
+      </div>
+      {flights.map((flight, index) => (
+        <BoardingPass
+          key={index}
+          index={index}
+          removeTicket={removeTicket}
+          setLoadingMessage={setLoadingMessage}
+          setSuccessMessage={setSuccessMessage}
+          setErrorMessage={setErrorMessage}
+          canBeRemoved={flights.length > 1 && index !== flights.length - 1}
+          airline={flight.airline || ""}
+          flightNumber={flight.flightNumber || ""}
+          departureAirport={flight.departureAirport || ""}
+          arrivalAirport={flight.arrivalAirport || ""}
+          departureDateTime={flight.departureDateTime || new Date()}
+          arrivalDateTime={flight.arrivalDateTime || new Date()}
+          addFlight={addTicket}
+          edit={{
+            airline: (v: string) => {
+              const newFlights = [...flights];
+              newFlights[index].airline = v;
+              setFlights(newFlights);
+            },
+            flightNumber: (v: string) => {
+              const newFlights = [...flights];
+              newFlights[index].flightNumber = v;
+              setFlights(newFlights);
+            },
+            departureAirport: (v: string) => {
+              const newFlights = [...flights];
+              newFlights[index].departureAirport = v.toUpperCase();
+              setFlights(newFlights);
+            },
+            arrivalAirport: (v: string) => {
+              const newFlights = [...flights];
+              newFlights[index].arrivalAirport = v.toUpperCase();
+              setFlights(newFlights);
+            },
+            departureDateTime: (v: Date) => {
+              const newFlights = [...flights];
+              newFlights[index].departureDateTime = v;
+              setFlights(newFlights);
+            },
+            arrivalDateTime: (v: Date) => {
+              const newFlights = [...flights];
+              newFlights[index].arrivalDateTime = v;
+              setFlights(newFlights);
+            },
+          }}
+        />
+      ))}
+
+      <div className="flex justify-center">
+        <button className="px-5 py-2.5 mt-4 bg-indigo-600 text-white text-md rounded-2xl">
+          Calculate the risk
+        </button>
+      </div>
     </div>
   );
 }
