@@ -12,7 +12,7 @@ client = OpenAI(
 )
 
 
-class UploadItinerary(APIView):
+class UploadItineraryView(APIView):
     parser_classes = [MultiPartParser]
 
     def post(self, request):
