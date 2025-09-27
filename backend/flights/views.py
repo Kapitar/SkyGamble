@@ -5,7 +5,8 @@ from openai import OpenAI
 from rest_framework.parsers import MultiPartParser
 from rest_framework.views import APIView, Response
 from .serializers import UploadPDFSerializer
-from .utils import PARSER_PROMPT
+from .utils import PARSER_PROMPT, map, get_coordinates, haversine, minutes_after_midnight, calculate_flight_duration, predict
+
 
 client = OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY"),
@@ -60,3 +61,45 @@ class UploadItineraryView(APIView):
         response_json = json.loads(response)
 
         return Response(response_json, status=201)
+
+
+class PredictFlightView(APIView):
+    def post(self, request):
+        flight_data = request.data.get("flights", [])
+        if not flight_data:
+            return Response({"error": "No flight data provided."}, status=400)
+        
+        results = []
+        for flight in flight_data:
+            departure_coordinates = get_coordinates(flight["departureAirport"])
+            arrival_coordinates = get_coordinates(flight["arrivalAirport"])
+            distance = haversine(
+                departure_coordinates["lat"],
+                departure_coordinates["lon"],
+                arrival_coordinates["lat"],
+                arrival_coordinates["lon"]
+            )
+            flight_duration = calculate_flight_duration(
+                flight["departureDateTime"], 
+                flight["arrivalDateTime"], 
+                flight["departureAirport"], 
+                flight["arrivalAirport"]
+            )
+            
+            # print(distance, flight_duration)
+            
+            df_row = map(
+                date=flight["departureDateTime"],          
+                airline=flight["airline"],              
+                flight_number=flight["flightNumber"],         
+                origin=flight["departureAirport"],
+                dest=flight["arrivalAirport"],               
+                dep_time=minutes_after_midnight(flight["departureDateTime"]),
+                arr_time=minutes_after_midnight(flight["arrivalDateTime"]),
+                elapsed_time=flight_duration,
+                distance=distance
+            )
+            
+            results.append(predict(df_row)[0])
+            
+        return Response({"results": results}, status=201)
