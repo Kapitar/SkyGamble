@@ -10,7 +10,7 @@ export type Flight = {
     flightNumber: (v: string) => void;
     departureAirport: (v: string) => void;
     arrivalAirport: (v: string) => void;
-    departureDateTime: (v: string) => void;
-    arrivalDateTime: (v: string) => void;
+    departureDateTime: (v: Date) => void;
+    arrivalDateTime: (v: Date) => void;
   };
 }

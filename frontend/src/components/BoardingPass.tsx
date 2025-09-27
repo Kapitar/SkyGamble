@@ -2,8 +2,11 @@ import { ReactNode } from "react";
 import { Flight } from "@/types/FlightType";
 
 type ExtendedFlight = Flight & {
+  index?: number;
+  canBeRemoved?: boolean;
+  removeTicket?: (index: number) => void;
   addFlight: () => void;
-}
+};
 
 export function BoardingPass({
   airline,
@@ -13,12 +16,47 @@ export function BoardingPass({
   departureDateTime,
   arrivalDateTime,
   edit,
-  addFlight
+  index,
+  canBeRemoved,
+  addFlight,
+  removeTicket,
 }: ExtendedFlight) {
   const toLocalInput = (d: Date) =>
     new Date(d.getTime() - d.getTimezoneOffset() * 60000)
       .toISOString()
       .slice(0, 16);
+
+  const fetchTicket = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const formData = new FormData();
+      formData.append("file", file);
+      fetch("http://localhost:8000/api/flights/upload", {
+        method: "POST",
+        body: formData,
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          console.log("Success:", data);
+          if (!data.relevant) {
+            console.log("No relevant flight information found in the ticket.");
+          }
+          edit?.airline(data.segments[0].airline_iata || "");
+          edit?.arrivalAirport(data.segments[0].arrival_airport || "");
+          edit?.departureAirport(data.segments[0].departure_airport || "");
+          edit?.departureDateTime(
+            new Date(data.segments[0].departure_datetime_local) || new Date()
+          );
+          edit?.arrivalDateTime(
+            new Date(data.segments[0].arrival_datetime_local) || new Date()
+          );
+          edit?.flightNumber(data.segments[0].flight_number || "");
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+        });
+    }
+  };
 
   return (
     <section className="relative rounded-[22px] overflow-visible shadow-2xl bg-white mb-16">
@@ -94,7 +132,9 @@ export function BoardingPass({
                 type="datetime-local"
                 className="w-full rounded-md text-black border border-slate-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 value={toLocalInput(departureDateTime)}
-                onChange={(e) => edit?.departureDateTime(e.target.value)}
+                onChange={(e) =>
+                  edit?.departureDateTime(new Date(e.target.value))
+                }
               />
             </KVRow>
             <KVRow label="Arrives">
@@ -102,14 +142,32 @@ export function BoardingPass({
                 type="datetime-local"
                 className="w-full rounded-md text-black border border-slate-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 value={toLocalInput(arrivalDateTime)}
-                onChange={(e) => edit?.arrivalDateTime(e.target.value)}
+                onChange={(e) =>
+                  edit?.arrivalDateTime(new Date(e.target.value))
+                }
               />
             </KVRow>
           </div>
 
-          <button className="px-5 py-2.5 mt-4 bg-indigo-600 text-white text-md rounded-2xl">
-            Upload a ticket
-          </button>
+          <form>
+            <input
+              type="file"
+              id={`ticketFile-${index}`}
+              name="ticketFile"
+              accept=".pdf,.jpg,.jpeg,.png"
+              onChange={fetchTicket}
+              className="hidden"
+            />
+            <label
+              htmlFor={`ticketFile-${index}`}
+              className="px-5 py-2.5 mt-4 bg-indigo-600 hover:bg-indigo-700 text-white text-md rounded-2xl cursor-pointer inline-block transition-colors"
+            >
+              Upload a ticket
+            </label>
+          </form>
+          <p className="text-sm mt-1 text-gray-600">
+            Only accepts PDF, PNG, JPG, JPEG
+          </p>
         </div>
 
         <div className="relative hidden md:block">
@@ -145,23 +203,36 @@ export function BoardingPass({
 
       <button
         type="button"
-        aria-label="Add"
-        onClick={addFlight}
-        className="
+        aria-label={canBeRemoved ? "Remove" : "Add"}
+        onClick={canBeRemoved ? () => removeTicket?.(index!) : addFlight}
+        className={`
           absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-1/2
           h-14 w-14 rounded-full
-          bg-indigo-600 text-white
+          ${
+            canBeRemoved
+              ? "bg-red-600 hover:bg-red-700"
+              : "bg-indigo-600 hover:bg-indigo-700"
+          } text-white
           shadow-xl border-2 border-white
           flex items-center justify-center z-10
-          focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2
+          focus:outline-none focus:ring-2 ${
+            canBeRemoved ? "focus:ring-red-400" : "focus:ring-indigo-400"
+          } focus:ring-offset-2
           active:scale-95 transition
           cursor-pointer
-        "
+        `}
       >
         <svg viewBox="0 0 24 24" aria-hidden="true" className="h-7 w-7">
           <path
             fill="currentColor"
-            d="M11 5a1 1 0 0 1 2 0v6h6a1 1 0 1 1 0 2h-6v6a1 1 0 1 1-2 0v-6H5a1 1 0 1 1 0-2h6V5z"
+            d={
+              canBeRemoved
+                ? "M6 6l12 12m0-12L6 18" // X cross
+                : "M11 5a1 1 0 0 1 2 0v6h6a1 1 0 1 1 0 2h-6v6a1 1 0 1 1-2 0v-6H5a1 1 0 1 1 0-2h6V5z" // Plus
+            }
+            stroke={canBeRemoved ? "currentColor" : "none"}
+            strokeWidth={canBeRemoved ? "2" : "0"}
+            strokeLinecap={canBeRemoved ? "round" : "butt"}
           />
         </svg>
       </button>

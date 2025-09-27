@@ -11,8 +11,8 @@ export default function Page() {
       flightNumber: "",
       departureAirport: "",
       arrivalAirport: "",
-      departureDateTime: new Date("2025-01-25T17:50"),
-      arrivalDateTime: new Date("2025-01-26T07:20"),
+      departureDateTime: new Date(),
+      arrivalDateTime: new Date(),
     },
   ]);
 
@@ -30,6 +30,12 @@ export default function Page() {
     ]);
   };
 
+  const removeTicket = (index: number) => {
+    const newFlights = [...flights];
+    newFlights.splice(index, 1);
+    setFlights(newFlights);
+  }
+
   return (
     <div className="container mx-auto px-4 mt-10">
       <div className="flex justify-center text-center mb-10">
@@ -46,10 +52,12 @@ export default function Page() {
         </div>
         {/* <Image src="/image.jpg" alt="missing-plane" width={500} height={100} /> */}
       </div>
-
       {flights.map((flight, index) => (
         <BoardingPass
           key={index}
+          index={index}
+          removeTicket={removeTicket}
+          canBeRemoved={flights.length > 1 && index !== flights.length - 1}
           airline={flight.airline || ""}
           flightNumber={flight.flightNumber || ""}
           departureAirport={flight.departureAirport || ""}
@@ -78,19 +86,25 @@ export default function Page() {
               newFlights[index].arrivalAirport = v.toUpperCase();
               setFlights(newFlights);
             },
-            departureDateTime: (v: string) => {
+            departureDateTime: (v: Date) => {
               const newFlights = [...flights];
-              newFlights[index].departureDateTime = new Date(v);
+              newFlights[index].departureDateTime = v;
               setFlights(newFlights);
             },
-            arrivalDateTime: (v: string) => {
+            arrivalDateTime: (v: Date) => {
               const newFlights = [...flights];
-              newFlights[index].arrivalDateTime = new Date(v);
+              newFlights[index].arrivalDateTime = v;
               setFlights(newFlights);
             },
           }}
         />
       ))}
+
+      <div className="flex justify-center">
+        <button className="px-5 py-2.5 mt-4 bg-indigo-600 text-white text-md rounded-2xl">
+          Calculate the risk
+        </button>
+      </div>
     </div>
   );
 }
