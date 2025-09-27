@@ -1,21 +1,9 @@
 import { ReactNode } from "react";
+import { Flight } from "@/types/FlightType";
 
-type BoardingPassProps = {
-  airline: string;
-  flightNumber: string;
-  departureAirport: string;
-  arrivalAirport: string;
-  departureDateTime: Date;
-  arrivalDateTime: Date;
-  edit?: {
-    airline: (v: string) => void;
-    flightNumber: (v: string) => void;
-    departureAirport: (v: string) => void;
-    arrivalAirport: (v: string) => void;
-    departureDateTime: (v: string) => void;
-    arrivalDateTime: (v: string) => void;
-  };
-};
+type ExtendedFlight = Flight & {
+  addFlight: () => void;
+}
 
 export function BoardingPass({
   airline,
@@ -25,15 +13,22 @@ export function BoardingPass({
   departureDateTime,
   arrivalDateTime,
   edit,
-}: BoardingPassProps) {
+  addFlight
+}: ExtendedFlight) {
   const toLocalInput = (d: Date) =>
-    new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+      .toISOString()
+      .slice(0, 16);
 
   return (
-    <section className="relative rounded-[22px] overflow-hidden shadow-2xl bg-white">
+    <section className="relative rounded-[22px] overflow-visible shadow-2xl bg-white mb-16">
       <div className="bg-indigo-600 text-white px-4 sm:px-6 py-3 sm:py-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="tracking-[0.25em] text-[11px] md:text-xs font-semibold">BOARDING PASS</h2>
-        <span className="text-sm sm:text-base font-medium opacity-95 truncate max-w-full sm:max-w-[60%]">{airline}</span>
+        <h2 className="tracking-[0.25em] text-[11px] md:text-xs font-semibold">
+          BOARDING PASS
+        </h2>
+        <span className="text-sm sm:text-base font-medium opacity-95 truncate max-w-full sm:max-w-[60%]">
+          {airline}
+        </span>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_18rem]">
@@ -43,7 +38,9 @@ export function BoardingPass({
 
           <div className="sm:hidden flex flex-col items-stretch gap-3">
             <div className="min-w-0 text-center">
-              <label className="text-[11px] uppercase tracking-wide text-slate-500">From:</label>
+              <label className="text-[11px] uppercase tracking-wide text-slate-500">
+                From:
+              </label>
               <BigInput
                 value={departureAirport}
                 onChange={(v) => edit?.departureAirport(v)}
@@ -51,7 +48,9 @@ export function BoardingPass({
               />
             </div>
             <div className="min-w-0 text-center">
-              <label className="text-[11px] uppercase tracking-wide text-slate-500">To:</label>
+              <label className="text-[11px] uppercase tracking-wide text-slate-500">
+                To:
+              </label>
               <BigInput
                 value={arrivalAirport}
                 onChange={(v) => edit?.arrivalAirport(v)}
@@ -63,7 +62,9 @@ export function BoardingPass({
 
           <div className="hidden sm:grid grid-cols-3 items-end gap-2 sm:gap-4">
             <div className="min-w-0 flex flex-col">
-              <label className="text-[11px] uppercase tracking-wide text-slate-500">From:</label>
+              <label className="text-[11px] uppercase tracking-wide text-slate-500">
+                From:
+              </label>
               <BigInput
                 value={departureAirport}
                 onChange={(v) => edit?.departureAirport(v)}
@@ -75,7 +76,9 @@ export function BoardingPass({
               <RouteIcon />
             </div>
             <div className="min-w-0 flex flex-col">
-              <label className="text-[11px] uppercase tracking-wide text-slate-500">To:</label>
+              <label className="text-[11px] uppercase tracking-wide text-slate-500">
+                To:
+              </label>
               <BigInput
                 value={arrivalAirport}
                 onChange={(v) => edit?.arrivalAirport(v)}
@@ -103,6 +106,10 @@ export function BoardingPass({
               />
             </KVRow>
           </div>
+
+          <button className="px-5 py-2.5 mt-4 bg-indigo-600 text-white text-md rounded-2xl">
+            Upload a ticket
+          </button>
         </div>
 
         <div className="relative hidden md:block">
@@ -135,6 +142,29 @@ export function BoardingPass({
           </div>
         </aside>
       </div>
+
+      <button
+        type="button"
+        aria-label="Add"
+        onClick={addFlight}
+        className="
+          absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-1/2
+          h-14 w-14 rounded-full
+          bg-indigo-600 text-white
+          shadow-xl border-2 border-white
+          flex items-center justify-center z-10
+          focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2
+          active:scale-95 transition
+          cursor-pointer
+        "
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true" className="h-7 w-7">
+          <path
+            fill="currentColor"
+            d="M11 5a1 1 0 0 1 2 0v6h6a1 1 0 1 1 0 2h-6v6a1 1 0 1 1-2 0v-6H5a1 1 0 1 1 0-2h6V5z"
+          />
+        </svg>
+      </button>
     </section>
   );
 }
@@ -142,7 +172,9 @@ export function BoardingPass({
 function KVRow({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="min-w-0">
-      <div className="text-[11px] uppercase tracking-wide text-slate-500">{label}</div>
+      <div className="text-[11px] uppercase tracking-wide text-slate-500">
+        {label}
+      </div>
       {children}
     </div>
   );
@@ -165,7 +197,9 @@ function BigInput({
       maxLength={3}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className={`${accent ? "text-indigo-600" : ""} text-4xl sm:text-5xl md:text-6xl font-black leading-none tracking-wider bg-transparent border-b-2 border-slate-300 focus:border-indigo-500 outline-none w-[6ch] text-center md:text-left`}
+      className={`${
+        accent ? "text-indigo-600" : ""
+      } text-4xl sm:text-5xl md:text-6xl font-black leading-none tracking-wider bg-transparent border-b-2 border-slate-300 focus:border-indigo-500 outline-none w-[6ch] text-center md:text-left`}
       style={{ textTransform: "uppercase" }}
     />
   );
@@ -183,15 +217,24 @@ function RouteIcon() {
 
 function PlaneIcon({ className = "w-10 h-10" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 48 48" aria-hidden className={className} fill="currentColor">
-      <path d="M12.5 28.5l4.7-3.4 7.5 1.8 8-5.8c1.5-1 3.1.8 1.9 2.2l-6 7 1.8 7.6-3.5 2-3.1-6.3-6.2 4.5c-.7.5-1.6.3-2.1-.4l-1.4-2c-.5-.7-.3-1.6.4-2.1l6.2-4.5-6.2-1.5c-.6-.2-1-.8-1-1.4v-1.3c0-.6.3-1.1.8-1.4z"/>
+    <svg
+      viewBox="0 0 48 48"
+      aria-hidden
+      className={className}
+      fill="currentColor"
+    >
+      <path d="M12.5 28.5l4.7-3.4 7.5 1.8 8-5.8c1.5-1 3.1.8 1.9 2.2l-6 7 1.8 7.6-3.5 2-3.1-6.3-6.2 4.5c-.7.5-1.6.3-2.1-.4l-1.4-2c-.5-.7-.3-1.6.4-2.1l6.2-4.5-6.2-1.5c-.6-.2-1-.8-1-1.4v-1.3c0-.6.3-1.1.8-1.4z" />
     </svg>
   );
 }
 
 function WorldMap({ className = "" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 1200 600" className={className} preserveAspectRatio="xMidYMid slice">
+    <svg
+      viewBox="0 0 1200 600"
+      className={className}
+      preserveAspectRatio="xMidYMid slice"
+    >
       <defs>
         <linearGradient id="wm" x1="0" x2="1">
           <stop offset="0%" stopColor="#000" stopOpacity=".6" />
@@ -200,21 +243,35 @@ function WorldMap({ className = "" }: { className?: string }) {
       </defs>
       <rect width="1200" height="600" fill="transparent" />
       <g fill="url(#wm)">
-        <path d="M149 197l28 3 21-7 15 7 19-6 19 6-10 17 15 11-5 12-21-3-5 10-18-3-6-11-25 1-13-12 6-25z"/>
-        <path d="M427 214l18-8 17 4 13 12 12-8 14 5 6 13-10 12 7 13-14 7-17-4-9-14-14-2-13-11 0-19z"/>
-        <path d="M706 240l22-11 21 5 12 10 25-3 10 10-7 16-30 4-8 12-23-6-12-14-10-9 0-14z"/>
-        <path d="M958 254l23-9 20 2 13 10 18-3 15 7 5 11-7 10-22 2-11 11-19-2-18-10-10-12 3-17z"/>
+        <path d="M149 197l28 3 21-7 15 7 19-6 19 6-10 17 15 11-5 12-21-3-5 10-18-3-6-11-25 1-13-12 6-25z" />
+        <path d="M427 214l18-8 17 4 13 12 12-8 14 5 6 13-10 12 7 13-14 7-17-4-9-14-14-2-13-11 0-19z" />
+        <path d="M706 240l22-11 21 5 12 10 25-3 10 10-7 16-30 4-8 12-23-6-12-14-10-9 0-14z" />
+        <path d="M958 254l23-9 20 2 13 10 18-3 15 7 5 11-7 10-22 2-11 11-19-2-18-10-10-12 3-17z" />
       </g>
     </svg>
   );
 }
 
-function Notch({ side, className = "" }: { side: "left" | "middle" | "right"; className?: string }) {
-  const base = "absolute top-1/2 -translate-y-1/2 w-6 h-6 bg-indigo-50/60 rounded-full shadow-inner";
+function Notch({
+  side,
+  className = "",
+}: {
+  side: "left" | "middle" | "right";
+  className?: string;
+}) {
+  const base =
+    "absolute top-1/2 -translate-y-1/2 w-6 h-6 bg-indigo-50/60 rounded-full shadow-inner";
   if (side === "middle") {
     return <div className="absolute inset-y-0 left-1/2 -translate-x-1/2" />;
   }
-  return <div className={`${base} ${className} ${side === "left" ? "-left-3" : "-right-3"}`} aria-hidden />;
+  return (
+    <div
+      className={`${base} ${className} ${
+        side === "left" ? "-left-3" : "-right-3"
+      }`}
+      aria-hidden
+    />
+  );
 }
 
 function Barcode() {
@@ -222,7 +279,10 @@ function Barcode() {
     <div className="h-16 sm:h-20 w-full rounded-md bg-white border border-slate-300 overflow-hidden">
       <div
         className="h-full w-full bg-[length:6px_100%]"
-        style={{ backgroundImage: "repeating-linear-gradient(90deg, rgb(30 41 59) 0 2px, transparent 2px 6px)" }}
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(90deg, rgb(30 41 59) 0 2px, transparent 2px 6px)",
+        }}
         aria-label="barcode"
       />
     </div>

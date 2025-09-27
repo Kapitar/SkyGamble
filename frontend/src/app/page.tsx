@@ -1,17 +1,34 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { BoardingPass } from "@/components/BoardingPass";
+import { Flight } from "@/types/FlightType";
 
 export default function Page() {
-  const [airline, setAirline] = useState("Lorem Airlines");
-  const [flightNumber, setFlightNumber] = useState("FR 0123");
-  const [departureAirport, setDepartureAirport] = useState("JFK");
-  const [arrivalAirport, setArrivalAirport] = useState("CDG");
-  const [departureDateTime, setDepartureDateTime] =
-    useState("2025-01-25T17:50");
-  const [arrivalDateTime, setArrivalDateTime] = useState("2025-01-26T07:20");
+  const [flights, setFlights] = useState<Flight[]>([
+    {
+      airline: "",
+      flightNumber: "",
+      departureAirport: "",
+      arrivalAirport: "",
+      departureDateTime: new Date("2025-01-25T17:50"),
+      arrivalDateTime: new Date("2025-01-26T07:20"),
+    },
+  ]);
+
+  const addTicket = () => {
+    setFlights([
+      ...flights,
+      {
+        airline: "",
+        flightNumber: "",
+        departureAirport: "",
+        arrivalAirport: "",
+        departureDateTime: new Date(),
+        arrivalDateTime: new Date(),
+      },
+    ]);
+  };
 
   return (
     <div className="container mx-auto px-4 mt-10">
@@ -26,28 +43,54 @@ export default function Page() {
             the gate—using live delays, security wait times, airport layout, and
             historic data. Simple. Private. Fast.
           </p>
-          <button className="px-5 py-2.5 mt-4 bg-indigo-600 text-white text-md rounded-2xl">
-            Upload your ticket
-          </button>
         </div>
         {/* <Image src="/image.jpg" alt="missing-plane" width={500} height={100} /> */}
       </div>
-      <BoardingPass
-        airline={airline}
-        flightNumber={flightNumber}
-        departureAirport={departureAirport}
-        arrivalAirport={arrivalAirport}
-        departureDateTime={new Date(departureDateTime)}
-        arrivalDateTime={new Date(arrivalDateTime)}
-        edit={{
-          airline: setAirline,
-          flightNumber: setFlightNumber,
-          departureAirport: (v: string) => setDepartureAirport(v.toUpperCase()),
-          arrivalAirport: (v: string) => setArrivalAirport(v.toUpperCase()),
-          departureDateTime: setDepartureDateTime,
-          arrivalDateTime: setArrivalDateTime,
-        }}
-      />
+
+      {flights.map((flight, index) => (
+        <BoardingPass
+          key={index}
+          airline={flight.airline || ""}
+          flightNumber={flight.flightNumber || ""}
+          departureAirport={flight.departureAirport || ""}
+          arrivalAirport={flight.arrivalAirport || ""}
+          departureDateTime={flight.departureDateTime || new Date()}
+          arrivalDateTime={flight.arrivalDateTime || new Date()}
+          addFlight={addTicket}
+          edit={{
+            airline: (v: string) => {
+              const newFlights = [...flights];
+              newFlights[index].airline = v;
+              setFlights(newFlights);
+            },
+            flightNumber: (v: string) => {
+              const newFlights = [...flights];
+              newFlights[index].flightNumber = v;
+              setFlights(newFlights);
+            },
+            departureAirport: (v: string) => {
+              const newFlights = [...flights];
+              newFlights[index].departureAirport = v.toUpperCase();
+              setFlights(newFlights);
+            },
+            arrivalAirport: (v: string) => {
+              const newFlights = [...flights];
+              newFlights[index].arrivalAirport = v.toUpperCase();
+              setFlights(newFlights);
+            },
+            departureDateTime: (v: string) => {
+              const newFlights = [...flights];
+              newFlights[index].departureDateTime = new Date(v);
+              setFlights(newFlights);
+            },
+            arrivalDateTime: (v: string) => {
+              const newFlights = [...flights];
+              newFlights[index].arrivalDateTime = new Date(v);
+              setFlights(newFlights);
+            },
+          }}
+        />
+      ))}
     </div>
   );
 }
