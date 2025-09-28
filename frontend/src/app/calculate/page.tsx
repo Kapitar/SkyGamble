@@ -58,18 +58,22 @@ export default function CalculatePage() {
       let expectedTime = 0;
       let summa = 0;
       console.log(probDistr);
-      if (probDistr[1] < 0.3) {
-        probDistr[1] = 0;
+      probDistr[0] *= 1.2
+      if (probDistr[1] < 0.15) {
+        probDistr[1] *= 0.1;
       }
-      if (probDistr[2] < 0.25) {
-        probDistr[2] = 0;
+      if (probDistr[2] < 0.2) {
+        probDistr[2] = 0.05;
       }
-      if (probDistr[3] < 0.2) {
-        probDistr[3] = 0;
+      probDistr[2] *= 0.9
+      if (probDistr[3] < 0.25) {
+        probDistr[3] = 0.03;
       }
-      if (probDistr[4] < 0.15) {
-        probDistr[4] = 0;
+      probDistr[3] *= 0.8
+      if (probDistr[4] < 0.3) {
+        probDistr[4] = 0.01;
       }
+      probDistr[4] *= 0.7
       for (let i = 0; i < 5; i++) {
         summa += probDistr[i];
       }
@@ -210,7 +214,7 @@ export default function CalculatePage() {
           subNote={
             index != flights.length - 1 ? (
               <div className="text-sm text-gray-600">
-                {successPercent[index] >= 80 && "Your flight is expected to be delayed by X minutes. Due to the tight connection, there is a high chance of missing your next flight. Please consider rebooking to allow more time between flights."}
+                {successPercent[index] >= 80 && "Your trip looks reliable — a high probability of success with minimal concerns."}
                 {successPercent[index] >= 60 && successPercent[index] < 80 && "Your trip is moderately reliable — some risk of delays or missed connections, but generally manageable."}
                 {successPercent[index] < 60 && "Your trip has a high risk — consider alternate routes or allowing more buffer time between layovers."}
               </div>
