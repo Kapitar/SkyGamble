@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import BoardingPass from "@/components/BoardingPass";
 import Notification from "@/components/Notification";
 import { Flight } from "@/types/FlightType";
 
 export default function Page() {
+  const router = useRouter();
   const [flights, setFlights] = useState<Flight[]>([
     {
       airline: "",
@@ -40,11 +42,84 @@ export default function Page() {
     setFlights(newFlights);
   };
 
+  const handleCalculateRisk = () => {
+    const flightsParam = encodeURIComponent(JSON.stringify(flights));
+    router.push(`/calculate?flights=${flightsParam}`);
+  };
+
+  const fetchTicket = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const supportedTypes = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "application/pdf",
+      ];
+
+      if (!supportedTypes.includes(file.type)) {
+        setErrorMessage(
+          "Unsupported file type. Please upload PDF, PNG, JPG, or JPEG files."
+        );
+        return;
+      }
+
+      const formData = new FormData();
+      const lowercaseFileName = file.name.toLowerCase();
+      const processedFile = new File([file], lowercaseFileName, {
+        type: file.type,
+      });
+
+      formData.append("file", processedFile);
+      setLoadingMessage("Uploading and processing ticket...");
+      fetch("http://localhost:8000/api/flights/upload", {
+        method: "POST",
+        body: formData,
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          console.log("Success:", data);
+          let assignedTickets: Flight[] = [];
+          for (let ticket in data) {
+            if (!ticket.relevant) {
+              setLoadingMessage("");
+              setErrorMessage("No relevant flight information found.");
+              setTimeout(() => setErrorMessage(""), 3000);
+              return;
+            }
+            
+            let createdTicket: Flight = {
+              airline: ticket.airline_iata || "",
+              arrivalAirport: ticket.arrival_airport || "",
+              departureAirport: ticket.departure_airport || "",
+              departureDateTime:
+                new Date(ticket.departure_datetime_local) || new Date(),
+              arrivalDateTime:
+                new Date(ticket.arrival_datetime_local) || new Date(),
+              flightNumber: ticket.flight_number || "",
+            }
+            setLoadingMessage("");
+            setSuccessMessage("Ticket processed successfully!");
+            setTimeout(() => setSuccessMessage(""), 3000);
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+        });
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 mt-10">
-      {!!errorMessage && <Notification type="error">{errorMessage}</Notification>}
-      {!!loadingMessage && <Notification type="loading">{loadingMessage}</Notification>}
-      {!!successMessage && <Notification type="success">{successMessage}</Notification>}
+      {!!errorMessage && (
+        <Notification type="error">{errorMessage}</Notification>
+      )}
+      {!!loadingMessage && (
+        <Notification type="loading">{loadingMessage}</Notification>
+      )}
+      {!!successMessage && (
+        <Notification type="success">{successMessage}</Notification>
+      )}
       <div className="flex justify-center text-center mb-10">
         <div className="w-196">
           <h1 className="text-6xl font-bold">
@@ -59,6 +134,27 @@ export default function Page() {
         </div>
         {/* <Image src="/image.jpg" alt="missing-plane" width={500} height={100} /> */}
       </div>
+
+      <form>
+        <input
+          type="file"
+          id="ticketFile"
+          name="ticketFile"
+          accept=".pdf,.jpg,.jpeg,.png"
+          onChange={fetchTicket}
+          className="hidden"
+        />
+        <label
+          htmlFor="ticketFile"
+          className="px-5 py-2.5 mt-4 bg-indigo-600 hover:bg-indigo-700 text-white text-md rounded-2xl cursor-pointer inline-block transition-colors"
+        >
+          Upload your itinerary
+        </label>
+      </form>
+      <p className="text-sm mt-1 text-gray-600">
+        Only accepts PDF, PNG, JPG, JPEG
+      </p>
+
       {flights.map((flight, index) => (
         <BoardingPass
           key={index}
@@ -111,7 +207,10 @@ export default function Page() {
       ))}
 
       <div className="flex justify-center">
-        <button className="px-5 py-2.5 mt-4 bg-indigo-600 text-white text-md rounded-2xl">
+        <button
+          onClick={handleCalculateRisk}
+          className="px-5 py-2.5 mt-4 bg-indigo-600 text-white text-md rounded-2xl"
+        >
           Calculate the risk
         </button>
       </div>

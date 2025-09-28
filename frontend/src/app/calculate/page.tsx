@@ -1,82 +1,229 @@
 "use client";
+import { useState, useEffect, use } from "react";
+import { useSearchParams } from "next/navigation";
 import { Info, Clock, ChevronRight } from "lucide-react";
 import { Fragment } from "react";
+import { Flight } from "@/types/FlightType";
 
 export default function CalculatePage() {
+  const searchParams = useSearchParams();
+  const flightsParam = searchParams.get("flights");
+  const flights: Flight[] = flightsParam
+    ? JSON.parse(decodeURIComponent(flightsParam))
+    : [];
+
+  const times = [0, 30, 90, 180, 300];
+
+  const [results, setResults] = useState<number[][]>([]);
+  const [expectedTime, setExpectedTime] = useState<number[]>([]);
+  const [successPercent, setSuccessPercent] = useState<number[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [totalSuccessRate, setTotalSuccessRate] = useState(0);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(
+          "http://localhost:8000/api/flights/predict",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              flights: flights,
+            }),
+          }
+        );
+        const data = await response.json();
+        setResults(data.results);
+      } catch (error) {
+        console.error("Error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    let calculatedExpectedTime: number[] = [];
+
+    let c: number[] = [];
+    let successRate = 1;
+    for (let flightNumber = 0; flightNumber < results.length; flightNumber++) {
+      let probDistr = results[flightNumber];
+      let expectedTime = 0;
+      let summa = 0;
+      console.log(probDistr);
+      if (probDistr[1] < 0.3) {
+        probDistr[1] = 0;
+      }
+      if (probDistr[2] < 0.25) {
+        probDistr[2] = 0;
+      }
+      if (probDistr[3] < 0.2) {
+        probDistr[3] = 0;
+      }
+      if (probDistr[4] < 0.15) {
+        probDistr[4] = 0;
+      }
+      for (let i = 0; i < 5; i++) {
+        summa += probDistr[i];
+      }
+      for (let i = 0; i < 5; i++) {
+        probDistr[i] /= summa;
+        expectedTime += probDistr[i] * times[i];
+      }
+      console.log(expectedTime);
+      calculatedExpectedTime.push(expectedTime);
+
+      if (flightNumber < results.length - 1) {
+        let nextFlight = flights[flightNumber + 1];
+        let currentFlight = flights[flightNumber];
+        let transitOverhead = 30;
+        if (nextFlight.departureAirport != currentFlight.arrivalAirport) {
+          transitOverhead = 150;
+        }
+
+        let layover =
+          Math.abs(
+            new Date(nextFlight.departureDateTime).getTime() -
+              new Date(currentFlight.arrivalDateTime).getTime()
+          ) /
+          (1000 * 60);
+
+        let upperBound = layover - transitOverhead;
+        let chance = 0;
+        for (let i = 0; i < 5; i++) {
+          if (times[i] <= upperBound) {
+            chance += probDistr[i];
+          }
+        }
+        console.log("Chance: " + chance * 100);
+        c.push(Math.round(chance * 100));
+        successRate *= chance;
+      }
+    }
+    setSuccessPercent(c);
+    setTotalSuccessRate(Math.round(successRate * 100));
+    setExpectedTime(calculatedExpectedTime);
+  }, [results]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
   return (
-    <div className="container mx-auto px-4 mt-10">
+    <div className="container mx-auto px-4 mt-6">
       <div className="text-center text-indigo-500 mb-6">
-        <h1 className="text-7xl font-bold">96%</h1>
+        <h1 className="text-7xl font-bold">{totalSuccessRate}%</h1>
         <p className="text-3xl">Success Rate</p>
       </div>
 
-      <FlightResultCard
-        airline={{ name: "Frontier Airlines", code: "F9" }}
-        duration="1h 29m"
-        ctaLabel="Learn more"
-        segments={[
-          {
-            time: "10:00pm",
-            date: "Sat, Oct 4",
-            city: "Atlanta",
-            airport: "Hartsfield–Jackson Atlanta International Airport, ATL",
-          },
-          {
-            time: "11:29pm",
-            date: "Sat, Oct 4",
-            city: "Tampa",
-            airport: "Tampa International Airport, TPA",
-          },
-        ]}
-        notices={[
-          {
-            tone: "warn",
-            label: "87% chance to miss next flight",
-            icon: <Info className="h-4 w-4" />,
-          },
-        ]}
-        subNote={
-          <div className="text-sm text-gray-600">
-            Your flight is expected to be delayed by X minutes. Due to the tight connection, there is a high chance of missing your
-            next flight. Please consider rebooking to allow more time between
-            flights.
-          </div>
-        }
-      />
-
-      <FlightResultCard
-        className="mt-4"
-        airline={{ name: "United Airlines", code: "UA" }}
-        duration="5h 36m"
-        ctaLabel="Learn more"
-        segments={[
-          {
-            time: "7:05am",
-            date: "Sun, Oct 5",
-            city: "Tampa",
-            airport: "Tampa International Airport, TPA",
-          },
-          {
-            time: "9:41am",
-            date: "Sun, Oct 5",
-            city: "San Francisco",
-            airport: "San Francisco International Airport, SFO",
-          },
-        ]}
-        notices={[
-          {
-            tone: "short",
-            label: "Short layover in San Francisco",
-            meta: "54 min",
-            icon: <Info className="h-4 w-4" />,
-          },
-        ]}
-      />
+      {flights.map((flight, index) => (
+        <FlightResultCard
+          key={index}
+          airline={{ name: flight.airline, code: flight.airline }}
+          ctaLabel="Learn more"
+          segments={[
+            {
+              time: new Date(flight.departureDateTime).toLocaleTimeString(
+                "en-US",
+                {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: true,
+                }
+              ),
+              expected:
+                expectedTime[index] >= 30
+                  ? new Date(
+                      new Date(flight.departureDateTime).getTime() +
+                        expectedTime[index] * 60 * 1000
+                    ).toLocaleTimeString("en-US", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: true,
+                    })
+                  : undefined,
+              date: new Date(flight.departureDateTime).toLocaleDateString(
+                "en-US",
+                {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                }
+              ),
+              city: "Atlanta",
+              airport: flight.departureAirport,
+            },
+            {
+              time: new Date(flight.arrivalDateTime).toLocaleTimeString(
+                "en-US",
+                {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: true,
+                }
+              ),
+              expected:
+                expectedTime[index] >= 30
+                  ? new Date(
+                      new Date(flight.arrivalDateTime).getTime() +
+                        expectedTime[index] * 60 * 1000
+                    ).toLocaleTimeString("en-US", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: true,
+                    })
+                  : undefined,
+              date: new Date(flight.arrivalDateTime).toLocaleDateString(
+                "en-US",
+                {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                }
+              ),
+              city: "Tampa",
+              airport: flight.arrivalAirport,
+            },
+          ]}
+          notices={
+            index != flights.length - 1
+              ? [
+                  {
+                    label: `${successPercent[index]}% chance of making next flight`,
+                    icon: <Info className="h-4 w-4" />,
+                    chance: successPercent[index],
+                  },
+                ]
+              : undefined
+          }
+          subNote={
+            index != flights.length - 1 ? (
+              <div className="text-sm text-gray-600">
+                {successPercent[index] >= 80 && "Your flight is expected to be delayed by X minutes. Due to the tight connection, there is a high chance of missing your next flight. Please consider rebooking to allow more time between flights."}
+                {successPercent[index] >= 60 && successPercent[index] < 80 && "Your trip is moderately reliable — some risk of delays or missed connections, but generally manageable."}
+                {successPercent[index] < 60 && "Your trip has a high risk — consider alternate routes or allowing more buffer time between layovers."}
+              </div>
+            ) : undefined
+          }
+        />
+      ))}
     </div>
   );
 }
 type Segment = {
   time: string;
+  expected?: string;
   date: string;
   city: string;
   airport: string;
@@ -85,14 +232,13 @@ type Segment = {
 type Notice = {
   label: string;
   icon?: React.ReactNode;
+  chance: number;
   meta?: string;
-  tone?: "info" | "warn" | "short";
 };
 
 type FlightResultCardProps = {
   className?: string;
   airline: { name: string; code?: string };
-  duration: string;
   ctaLabel?: string;
   segments: [Segment, Segment];
   notices?: Notice[];
@@ -102,7 +248,6 @@ type FlightResultCardProps = {
 function FlightResultCard({
   className,
   airline,
-  duration,
   ctaLabel = "Learn more",
   segments,
   notices = [],
@@ -111,7 +256,7 @@ function FlightResultCard({
   return (
     <section
       className={
-        "relative rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:p-5 " +
+        "relative rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:p-5 mb-5" +
         (className ?? "")
       }
     >
@@ -121,19 +266,8 @@ function FlightResultCard({
           <AirlineAvatar code={airline.code} name={airline.name} />
           <div>
             <p className="text-base font-semibold leading-6">{airline.name}</p>
-            <p className="mt-0.5 flex items-center text-sm text-slate-500">
-              <Clock className="mr-1 h-4 w-4" /> {duration}
-            </p>
           </div>
         </div>
-
-        <button
-          className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-200"
-          type="button"
-        >
-          {ctaLabel}
-          <ChevronRight className="h-4 w-4" />
-        </button>
       </div>
 
       {/* timeline */}
@@ -152,7 +286,16 @@ function FlightResultCard({
               {/* content */}
               <div className={idx < segments.length - 1 ? "pb-6" : ""}>
                 <p className="text-[15px] font-semibold leading-5">
-                  {s.time}{" "}
+                  {s.expected ? (
+                    <>
+                      <span className="line-through decoration-red-500 text-gray-500">
+                        {s.time}
+                      </span>
+                      <span className="ml-2">{s.expected}</span>
+                    </>
+                  ) : (
+                    <span>{s.time}</span>
+                  )}{" "}
                   <span className="font-normal text-slate-500">{s.date}</span>
                 </p>
                 <p className="text-[15px] font-medium leading-6">{s.city}</p>
@@ -168,7 +311,7 @@ function FlightResultCard({
         <div className="mt-4 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-100">
           <div className="flex flex-wrap items-center gap-2">
             {notices.map((n, i) => (
-              <Badge key={i} tone={n.tone}>
+              <Badge key={i} chance={n.chance}>
                 {n.icon}
                 <span className="ml-1">{n.label}</span>
                 {n.meta && (
@@ -196,22 +339,29 @@ function AirlineAvatar({ code, name }: { code?: string; name: string }) {
 
 function Badge({
   children,
-  tone = "info",
+  chance,
 }: {
   children: React.ReactNode;
-  tone?: "info" | "warn" | "short";
+  chance: number;
 }) {
   const styles = {
-    info: "bg-indigo-100 text-indigo-900",
-    warn: "bg-rose-100 text-rose-900",
-    short: "bg-violet-100 text-violet-900",
-  } as const;
+    danger: "bg-red-100 text-red-900",
+    warn: "bg-yellow-100 text-yellow-900",
+    success: "bg-indigo-100 text-indigo-900",
+  };
+
+  let tone = styles.success;
+  if (chance >= 60 && chance < 80) {
+    tone = styles.warn;
+  } else if (chance < 60) {
+    tone = styles.danger;
+  }
 
   return (
     <span
       className={
         "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold " +
-        styles[tone]
+        tone
       }
     >
       {children}
