@@ -32,64 +32,6 @@ export default function BoardingPass({
       .toISOString()
       .slice(0, 16);
 
-  const fetchTicket = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const supportedTypes = [
-        "image/jpeg",
-        "image/jpg",
-        "image/png",
-        "application/pdf",
-      ];
-
-      if (!supportedTypes.includes(file.type)) {
-        setErrorMessage(
-          "Unsupported file type. Please upload PDF, PNG, JPG, or JPEG files."
-        );
-        return;
-      }
-
-      const formData = new FormData();
-      const lowercaseFileName = file.name.toLowerCase();
-      const processedFile = new File([file], lowercaseFileName, {
-        type: file.type,
-      });
-
-      formData.append("file", processedFile);
-      setLoadingMessage("Uploading and processing ticket...");
-      fetch("http://localhost:8000/api/flights/upload", {
-        method: "POST",
-        body: formData,
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          console.log("Success:", data);
-          if (!data.relevant) {
-            setLoadingMessage("");
-            setErrorMessage("No relevant flight information found.");
-            setTimeout(() => setErrorMessage(""), 3000);
-            return;
-          }
-          edit?.airline(data.segments[0].airline_iata || "");
-          edit?.arrivalAirport(data.segments[0].arrival_airport || "");
-          edit?.departureAirport(data.segments[0].departure_airport || "");
-          edit?.departureDateTime(
-            new Date(data.segments[0].departure_datetime_local) || new Date()
-          );
-          edit?.arrivalDateTime(
-            new Date(data.segments[0].arrival_datetime_local) || new Date()
-          );
-          edit?.flightNumber(data.segments[0].flight_number || "");
-          setLoadingMessage("");
-          setSuccessMessage("Ticket processed successfully!");
-          setTimeout(() => setSuccessMessage(""), 3000);
-        })
-        .catch((error) => {
-          console.error("Error:", error);
-        });
-    }
-  };
-
   return (
     <section className="relative rounded-[22px] overflow-visible shadow-2xl bg-white mb-16">
       <div className="bg-indigo-600 text-white px-4 sm:px-6 py-3 sm:py-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
@@ -180,26 +122,6 @@ export default function BoardingPass({
               />
             </KVRow>
           </div>
-
-          <form>
-            <input
-              type="file"
-              id={`ticketFile-${index}`}
-              name="ticketFile"
-              accept=".pdf,.jpg,.jpeg,.png"
-              onChange={fetchTicket}
-              className="hidden"
-            />
-            <label
-              htmlFor={`ticketFile-${index}`}
-              className="px-5 py-2.5 mt-4 bg-indigo-600 hover:bg-indigo-700 text-white text-md rounded-2xl cursor-pointer inline-block transition-colors"
-            >
-              Upload a ticket
-            </label>
-          </form>
-          <p className="text-sm mt-1 text-gray-600">
-            Only accepts PDF, PNG, JPG, JPEG
-          </p>
         </div>
 
         <div className="relative hidden md:block">
