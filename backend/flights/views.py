@@ -48,7 +48,7 @@ class UploadItineraryView(APIView):
             parts.append({"type": "input_image", "file_id": result.id})   
             
         response = client.responses.create(
-            model="gpt-5-nano",
+            model="gpt-5-mini",
             input=[
                 {
                     "role": "user",
