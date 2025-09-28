@@ -49,11 +49,12 @@ STRICT RULES
    - If the file clearly contains multiple distinct flights (connections or round-trips), return one ARRAY ELEMENT per flight segment in chronological order.
 4) Required data:
    - departure/arrival date & time (local, 24h, 'YYYY-MM-DDTHH:MM').
+   - if you there is no year, use current year instead
    - departure/arrival airport codes (IATA 3-letter, uppercase).
    - airline_iata (MUST be 2-letter IATA code, uppercase).
    - flight_number (airline_iata immediately followed by digits, e.g., "UA15", no spaces).
-5) If a required field is not present, put null for that field and enumerate it in "missing_fields".
-6) DO NOT guess airport codes or airline codes beyond what the document clearly implies.
+5) If a required field is not present, and you cannot derive it, put null for that field and enumerate it in "missing_fields".
+6) Try to guess airport code if there is no explicit airport code
 7) Timezones:
    - Write local times, not UTC, using 24h "YYYY-MM-DDTHH:MM". If only a time is shown without date, infer date from context when clearly indicated; otherwise set to null and explain in notes.
 8) Airline code rules:
@@ -65,21 +66,21 @@ STRICT RULES
 10) Date/time parsing:
    - Normalize AM/PM to 24h. Examples: "7:05 PM" -> "19:05".
    - Accept formats like "2025-09-26", "26 Sep 2025", "26/09/2025", etc.—normalize to "YYYY-MM-DD".
-11) Barcodes, SSR/PNR, seat, gate, and sequence numbers are irrelevant unless they directly help find required data.
+   11) Barcodes, SSR/PNR, seat, gate, and sequence numbers are irrelevant unless they directly help find required data.
 12) If the file is not flight-related, return:
-  [
-      {
-        "relevant": false,
-        "departure_airport": null,
-        "arrival_airport": null,
-        "departure_datetime_local": null,
-        "arrival_datetime_local": null,
-        "airline_iata": null,
-        "flight_number": null,
-        "missing_fields": [],
-        "notes": "Reason (e.g., invoice, unrelated doc, or other non-flight content)."
-      }
-  ]
+[
+   {
+      "relevant": false,
+      "departure_airport": null,
+      "arrival_airport": null,
+      "departure_datetime_local": null,
+      "arrival_datetime_local": null,
+      "airline_iata": null,
+      "flight_number": null,
+      "missing_fields": [],
+      "notes": "Reason (e.g., invoice, unrelated doc, or other non-flight content)."
+   }
+]
 
 VALIDATION BEFORE OUTPUT
 - Top-level must be a JSON ARRAY.
