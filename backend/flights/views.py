@@ -73,6 +73,8 @@ class PredictFlightView(APIView):
         for flight in flight_data:
             departure_coordinates = get_coordinates(flight["departureAirport"])
             arrival_coordinates = get_coordinates(flight["arrivalAirport"])
+            flight["departureDateTime"] = flight["departureDateTime"][:-1]
+            flight["arrivalDateTime"] = flight["arrivalDateTime"][:-1]
             distance = haversine(
                 departure_coordinates["lat"],
                 departure_coordinates["lon"],
