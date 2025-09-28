@@ -80,14 +80,15 @@ export default function Page() {
         .then((data) => {
           console.log("Success:", data);
           let assignedTickets: Flight[] = [];
-          for (let ticket in data) {
+          for (let ticket of data) {
+            console.log(ticket);
             if (!ticket.relevant) {
               setLoadingMessage("");
               setErrorMessage("No relevant flight information found.");
               setTimeout(() => setErrorMessage(""), 3000);
               return;
             }
-            
+
             let createdTicket: Flight = {
               airline: ticket.airline_iata || "",
               arrivalAirport: ticket.arrival_airport || "",
@@ -97,11 +98,13 @@ export default function Page() {
               arrivalDateTime:
                 new Date(ticket.arrival_datetime_local) || new Date(),
               flightNumber: ticket.flight_number || "",
-            }
+            };
+            assignedTickets.push(createdTicket);
             setLoadingMessage("");
             setSuccessMessage("Ticket processed successfully!");
             setTimeout(() => setSuccessMessage(""), 3000);
           }
+          setFlights(assignedTickets);
         })
         .catch((error) => {
           console.error("Error:", error);
@@ -131,29 +134,28 @@ export default function Page() {
             the gate—using live delays, security wait times, airport layout, and
             historic data. Simple. Private. Fast.
           </p>
+          <form>
+            <input
+              type="file"
+              id="ticketFile"
+              name="ticketFile"
+              accept=".pdf,.jpg,.jpeg,.png"
+              onChange={fetchTicket}
+              className="hidden"
+            />
+            <label
+              htmlFor="ticketFile"
+              className="px-5 py-2.5 mt-4 bg-indigo-600 hover:bg-indigo-700 text-white text-md rounded-2xl cursor-pointer inline-block transition-colors"
+            >
+              Upload your itinerary
+            </label>
+            <p className="text-sm mt-1 text-gray-600">
+              Only accepts PDF, PNG, JPG, JPEG
+            </p>
+          </form>
         </div>
         {/* <Image src="/image.jpg" alt="missing-plane" width={500} height={100} /> */}
       </div>
-
-      <form>
-        <input
-          type="file"
-          id="ticketFile"
-          name="ticketFile"
-          accept=".pdf,.jpg,.jpeg,.png"
-          onChange={fetchTicket}
-          className="hidden"
-        />
-        <label
-          htmlFor="ticketFile"
-          className="px-5 py-2.5 mt-4 bg-indigo-600 hover:bg-indigo-700 text-white text-md rounded-2xl cursor-pointer inline-block transition-colors"
-        >
-          Upload your itinerary
-        </label>
-      </form>
-      <p className="text-sm mt-1 text-gray-600">
-        Only accepts PDF, PNG, JPG, JPEG
-      </p>
 
       {flights.map((flight, index) => (
         <BoardingPass
