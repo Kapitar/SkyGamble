@@ -1,77 +1,64 @@
 "use client";
+import { useState, useEffect, use } from "react";
+import { useSearchParams } from "next/navigation";
 import { Info, Clock, ChevronRight } from "lucide-react";
 import { Fragment } from "react";
+import { Flight } from "@/types/FlightType";
 
 export default function CalculatePage() {
+  const searchParams = useSearchParams();
+  const flightsParam = searchParams.get("flights");
+  const flights: Flight[] = flightsParam
+    ? JSON.parse(decodeURIComponent(flightsParam))
+    : [];
+  
+  useEffect(() => {
+    
+  }, []);
+
   return (
-    <div className="container mx-auto px-4 mt-10">
+    <div className="container mx-auto px-4 mt-6">
       <div className="text-center text-indigo-500 mb-6">
         <h1 className="text-7xl font-bold">96%</h1>
         <p className="text-3xl">Success Rate</p>
       </div>
 
-      <FlightResultCard
-        airline={{ name: "Frontier Airlines", code: "F9" }}
-        duration="1h 29m"
-        ctaLabel="Learn more"
-        segments={[
-          {
-            time: "10:00pm",
-            date: "Sat, Oct 4",
-            city: "Atlanta",
-            airport: "Hartsfield–Jackson Atlanta International Airport, ATL",
-          },
-          {
-            time: "11:29pm",
-            date: "Sat, Oct 4",
-            city: "Tampa",
-            airport: "Tampa International Airport, TPA",
-          },
-        ]}
-        notices={[
-          {
-            tone: "warn",
-            label: "87% chance to miss next flight",
-            icon: <Info className="h-4 w-4" />,
-          },
-        ]}
-        subNote={
-          <div className="text-sm text-gray-600">
-            Your flight is expected to be delayed by X minutes. Due to the tight connection, there is a high chance of missing your
-            next flight. Please consider rebooking to allow more time between
-            flights.
-          </div>
-        }
-      />
-
-      <FlightResultCard
-        className="mt-4"
-        airline={{ name: "United Airlines", code: "UA" }}
-        duration="5h 36m"
-        ctaLabel="Learn more"
-        segments={[
-          {
-            time: "7:05am",
-            date: "Sun, Oct 5",
-            city: "Tampa",
-            airport: "Tampa International Airport, TPA",
-          },
-          {
-            time: "9:41am",
-            date: "Sun, Oct 5",
-            city: "San Francisco",
-            airport: "San Francisco International Airport, SFO",
-          },
-        ]}
-        notices={[
-          {
-            tone: "short",
-            label: "Short layover in San Francisco",
-            meta: "54 min",
-            icon: <Info className="h-4 w-4" />,
-          },
-        ]}
-      />
+      {flights.map((flight, index) => (
+        <FlightResultCard
+          key={index}
+          airline={{ name: flight.airline, code: flight.airline }}
+          ctaLabel="Learn more"
+          segments={[
+            {
+              time: "10:00pm",
+              date: "Sat, Oct 4",
+              city: "Atlanta",
+              airport: flight.departureAirport,
+            },
+            {
+              time: "11:29pm",
+              date: "Sat, Oct 4",
+              city: "Tampa",
+              airport: flight.arrivalAirport,
+            },
+          ]}
+          notices={[
+            {
+              tone: "warn",
+              label: "87% chance to miss next flight",
+              icon: <Info className="h-4 w-4" />,
+            },
+          ]}
+          subNote={
+            <div className="text-sm text-gray-600">
+              Your flight is expected to be delayed by X minutes. Due to the
+              tight connection, there is a high chance of missing your next
+              flight. Please consider rebooking to allow more time between
+              flights.
+            </div>
+          }
+        />
+      ))}
     </div>
   );
 }
@@ -92,7 +79,6 @@ type Notice = {
 type FlightResultCardProps = {
   className?: string;
   airline: { name: string; code?: string };
-  duration: string;
   ctaLabel?: string;
   segments: [Segment, Segment];
   notices?: Notice[];
@@ -102,7 +88,6 @@ type FlightResultCardProps = {
 function FlightResultCard({
   className,
   airline,
-  duration,
   ctaLabel = "Learn more",
   segments,
   notices = [],
@@ -111,7 +96,7 @@ function FlightResultCard({
   return (
     <section
       className={
-        "relative rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:p-5 " +
+        "relative rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 sm:p-5 mb-5" +
         (className ?? "")
       }
     >
@@ -121,9 +106,6 @@ function FlightResultCard({
           <AirlineAvatar code={airline.code} name={airline.name} />
           <div>
             <p className="text-base font-semibold leading-6">{airline.name}</p>
-            <p className="mt-0.5 flex items-center text-sm text-slate-500">
-              <Clock className="mr-1 h-4 w-4" /> {duration}
-            </p>
           </div>
         </div>
 

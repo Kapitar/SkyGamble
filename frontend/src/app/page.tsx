@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import BoardingPass from "@/components/BoardingPass";
 import Notification from "@/components/Notification";
 import { Flight } from "@/types/FlightType";
 
 export default function Page() {
+  const router = useRouter();
   const [flights, setFlights] = useState<Flight[]>([
     {
       airline: "",
@@ -40,11 +42,22 @@ export default function Page() {
     setFlights(newFlights);
   };
 
+  const handleCalculateRisk = () => {
+    const flightsParam = encodeURIComponent(JSON.stringify(flights));
+    router.push(`/calculate?flights=${flightsParam}`);
+  };
+
   return (
     <div className="container mx-auto px-4 mt-10">
-      {!!errorMessage && <Notification type="error">{errorMessage}</Notification>}
-      {!!loadingMessage && <Notification type="loading">{loadingMessage}</Notification>}
-      {!!successMessage && <Notification type="success">{successMessage}</Notification>}
+      {!!errorMessage && (
+        <Notification type="error">{errorMessage}</Notification>
+      )}
+      {!!loadingMessage && (
+        <Notification type="loading">{loadingMessage}</Notification>
+      )}
+      {!!successMessage && (
+        <Notification type="success">{successMessage}</Notification>
+      )}
       <div className="flex justify-center text-center mb-10">
         <div className="w-196">
           <h1 className="text-6xl font-bold">
@@ -111,7 +124,10 @@ export default function Page() {
       ))}
 
       <div className="flex justify-center">
-        <button className="px-5 py-2.5 mt-4 bg-indigo-600 text-white text-md rounded-2xl">
+        <button
+          onClick={handleCalculateRisk}
+          className="px-5 py-2.5 mt-4 bg-indigo-600 text-white text-md rounded-2xl"
+        >
           Calculate the risk
         </button>
       </div>
